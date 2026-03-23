@@ -1,0 +1,11 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/events/[eventId]/page": "app/events/[eventId]/page.js",
+  "/events/page": "app/events/page.js",
+  "/leaderboard/page": "app/leaderboard/page.js",
+  "/page": "app/page.js",
+  "/login/page": "app/login/page.js",
+  "/profile/page": "app/profile/page.js",
+  "/discover/page": "app/discover/page.js"
+}
