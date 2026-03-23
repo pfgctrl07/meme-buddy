@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { Event } from "../models/Event.js";
 import { User } from "../models/User.js";
 import { accuracySummary, evaluatePrediction, generateTimeline } from "./predictionEngine.js";
+import { applyLiveSnapshotToEvent, fetchLiveCoinSnapshot } from "./liveMarketData.js";
 
 function buildEventPayload({ name, asset, description, createdBy, views, clicks, mentions, inviteCode, sentiment }) {
   const engagement = { views, clicks, mentions, sentiment };
@@ -104,9 +105,9 @@ export async function seedDatabase() {
   ]);
 }
 
-export function shapeEvent(event) {
+export async function shapeEvent(event) {
   const payload = event.toJSON ? event.toJSON() : event;
-  return {
+  const baseEvent = {
     ...payload,
     analysis: {
       accuracy: accuracySummary(payload.trendScore),
@@ -116,4 +117,15 @@ export function shapeEvent(event) {
       socialCoverage: payload.socialSignals?.sources?.map((source) => source.platform) || [],
     },
   };
+
+  try {
+    const snapshot = await fetchLiveCoinSnapshot(baseEvent);
+    if (!snapshot) {
+      return baseEvent;
+    }
+
+    return applyLiveSnapshotToEvent(baseEvent, snapshot);
+  } catch {
+    return baseEvent;
+  }
 }

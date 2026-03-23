@@ -31,14 +31,21 @@ export default function EventDetailPage() {
         mentions: item.mentions,
         clicks: item.clicks,
         views: item.views,
+        volume: item.volume,
+        price: item.price,
+        trendIndex: item.trendIndex,
       })),
     [event]
   );
 
-  const chartTitle = chartMode === "mentions" ? "Mentions growth" : chartMode === "clicks" ? "Clicks growth" : "Views growth";
+  const chartTitle = chartMode === "mentions" ? "Search-interest growth" : chartMode === "volume" ? "Market volume trend" : "Price trend";
   const chartSubtitle =
-    chartMode === "mentions" ? "Social velocity over time" : chartMode === "clicks" ? "Conversion intent over time" : "Audience expansion over time";
-  const chartStroke = chartMode === "mentions" ? "#6c7cff" : chartMode === "clicks" ? "#3dc6ff" : "#39d98a";
+    chartMode === "mentions"
+      ? "Google Trends interest over time"
+      : chartMode === "volume"
+        ? "Binance quote volume over time"
+        : "Binance closing price over time";
+  const chartStroke = chartMode === "mentions" ? "#6c7cff" : chartMode === "volume" ? "#3dc6ff" : "#39d98a";
 
   return (
     <AppShell title={event?.name || "Event detail"} eyebrow="Realtime simulation room">
@@ -107,9 +114,9 @@ export default function EventDetailPage() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {[
-                    { key: "mentions", label: "Mentions", icon: Hash },
-                    { key: "clicks", label: "Clicks", icon: MousePointerClick },
-                    { key: "views", label: "Views", icon: Eye },
+                    { key: "mentions", label: "Interest", icon: Hash },
+                    { key: "volume", label: "Volume", icon: MousePointerClick },
+                    { key: "price", label: "Price", icon: Eye },
                   ].map((item) => {
                     const Icon = item.icon;
                     const active = chartMode === item.key;
@@ -141,10 +148,10 @@ export default function EventDetailPage() {
               <h3 className="mt-2 text-xl font-semibold text-white">Prediction score breakdown</h3>
 
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                <DataTile label="Prediction score" value={`${event.score ?? event.trendScore}/100`} detail="Computed from mentions, engagement, and sentiment." />
+                <DataTile label="Prediction score" value={`${event.score ?? event.trendScore}/100`} detail="Computed from live interest, market activity, and sentiment." />
                 <DataTile label="Confidence" value={`${event.confidence}%`} detail="Model certainty based on the final trend score." />
-                <DataTile label="Sentiment" value={`${event.sentiment ?? 50}/100`} detail="Sentiment contribution used by the scoring formula." />
-                <DataTile label="Benchmark" value={event.analysis?.accuracy?.label || "Unverified"} detail="Stored prototype benchmark accuracy." />
+                <DataTile label="Sentiment" value={`${event.sentiment ?? 50}/100`} detail="Sentiment contribution blended from price action and community health." />
+                <DataTile label="Measured fit" value={event.analysis?.accuracy?.label || "Unverified"} detail="Recent interval hit-rate using live series." />
               </div>
 
               <div className="mt-6 rounded-[1.75rem] border border-line bg-white/5 p-5">
@@ -152,7 +159,7 @@ export default function EventDetailPage() {
                 <p className="mt-3 text-sm leading-7 text-muted">
                   {event.analysis?.note ||
                     event.analysis?.accuracy?.note ||
-                    "The prediction engine blends engagement velocity, simulation pressure, and trust signals into a single event score."}
+                    "The prediction engine blends live search interest, exchange structure, and market/community trust signals into a single event score."}
                 </p>
               </div>
             </div>

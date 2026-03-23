@@ -55,7 +55,7 @@ export async function createEvent(req, res) {
 
   return res.status(201).json({
     message: "Trend event created",
-    event: shapeEvent(event),
+    event: await shapeEvent(event),
   });
 }
 
@@ -108,13 +108,13 @@ export async function joinEvent(req, res) {
 
   return res.json({
     message: hasJoined ? "You already joined this event" : "Joined event successfully",
-    event: shapeEvent(event),
+    event: await shapeEvent(event),
   });
 }
 
 export async function listEvents(req, res) {
   const events = await Event.find().sort({ createdAt: -1 }).limit(12);
-  return res.json({ items: events.map(shapeEvent) });
+  return res.json({ items: await Promise.all(events.map((event) => shapeEvent(event))) });
 }
 
 export async function getEventDetail(req, res) {
@@ -126,7 +126,7 @@ export async function getEventDetail(req, res) {
   const rankedUsers = await User.find({ _id: { $in: event.participants } }).sort({ points: -1 });
 
   return res.json({
-    event: shapeEvent(event),
+    event: await shapeEvent(event),
     leaderboard: rankedUsers.map((user, index) => ({
       rank: index + 1,
       name: user.name,

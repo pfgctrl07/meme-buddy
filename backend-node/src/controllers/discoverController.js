@@ -3,7 +3,7 @@ import { shapeEvent } from "../services/seedService.js";
 
 export async function getDiscover(req, res) {
   const filter = req.query.filter || "top-gaining";
-  const events = (await Event.find()).map(shapeEvent);
+  const events = await Promise.all((await Event.find()).map((event) => shapeEvent(event)));
 
   if (filter === "most-active") {
     events.sort((a, b) => b.engagement.mentions - a.engagement.mentions);

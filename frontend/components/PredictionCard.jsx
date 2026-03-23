@@ -50,7 +50,10 @@ export function PredictionCard({ event }) {
       </div>
 
       <p className="mt-5 text-sm leading-7 text-muted">
-        {event.analysis?.accuracy?.note || "This prototype prediction blends engagement, trend momentum, and simulated trust signals."}
+        {event.analysis?.accuracy?.note ||
+          (event.analysis?.liveData
+            ? "This live prediction blends Google Trends, Binance, and CoinGecko signals."
+            : "This prototype prediction blends engagement, trend momentum, and simulated trust signals.")}
       </p>
     </div>
   );

@@ -6,6 +6,9 @@ const timelineSchema = new mongoose.Schema(
     mentions: Number,
     clicks: Number,
     views: Number,
+    volume: Number,
+    price: Number,
+    trendIndex: Number,
   },
   { _id: false }
 );
