@@ -123,6 +123,39 @@ async function fetchCoinGeckoCoin(coinId) {
   };
 }
 
+async function fetchCoinGeckoMarketSnapshot(coinId) {
+  const data = await fetchJson(
+    `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${encodeURIComponent(coinId)}&price_change_percentage=24h,7d`
+  );
+  const item = Array.isArray(data) ? data[0] : null;
+
+  return {
+    currentPrice: Number(item?.current_price || 0),
+    priceChangePercent: Number(item?.price_change_percentage_24h_in_currency || item?.price_change_percentage_24h || 0),
+    marketCap: Number(item?.market_cap || 0),
+    totalVolume: Number(item?.total_volume || 0),
+  };
+}
+
+async function fetchCoinGeckoMarketChart(coinId) {
+  const data = await fetchJson(
+    `https://api.coingecko.com/api/v3/coins/${encodeURIComponent(coinId)}/market_chart?vs_currency=usd&days=7&interval=daily`
+  );
+
+  const prices = Array.isArray(data?.prices) ? data.prices : [];
+  const volumes = Array.isArray(data?.total_volumes) ? data.total_volumes : [];
+
+  return prices.map((item, index) => ({
+    time: Number(item[0]),
+    label: new Date(Number(item[0])).toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+    }),
+    close: Number(item[1] || 0),
+    volume: Number(volumes[index]?.[1] || 0),
+  }));
+}
+
 async function fetchGoogleTrendsSeries(keyword) {
   const exploreReq = {
     comparisonItem: [{ keyword, time: "now 7-d", geo: "" }],
@@ -371,37 +404,66 @@ export async function fetchLiveCoinSnapshot(eventLike) {
     return cached;
   }
 
-  const [tickerResult, klinesResult, coinGeckoResult, trendResult] = await Promise.allSettled([
+  const [tickerResult, klinesResult, coinGeckoResult, coinGeckoMarketResult, coinGeckoChartResult, trendResult] = await Promise.allSettled([
     fetchBinanceTicker(profile.symbol),
     fetchBinanceKlines(profile.symbol),
     fetchCoinGeckoCoin(profile.coinId),
+    fetchCoinGeckoMarketSnapshot(profile.coinId),
+    fetchCoinGeckoMarketChart(profile.coinId),
     fetchGoogleTrendsSeries(profile.keyword),
   ]);
 
-  if (tickerResult.status !== "fulfilled" || klinesResult.status !== "fulfilled" || coinGeckoResult.status !== "fulfilled") {
+  const coinGeckoBase =
+    coinGeckoResult.status === "fulfilled"
+      ? coinGeckoResult.value
+      : {
+          marketCap: Number(coinGeckoMarketResult.status === "fulfilled" ? coinGeckoMarketResult.value.marketCap : 0),
+          totalVolume: Number(coinGeckoMarketResult.status === "fulfilled" ? coinGeckoMarketResult.value.totalVolume : 0),
+          sentimentUp: 50,
+          twitterFollowers: 0,
+          subredditSubscribers: 0,
+        };
+
+  const ticker =
+    tickerResult.status === "fulfilled"
+      ? tickerResult.value
+      : coinGeckoMarketResult.status === "fulfilled"
+        ? {
+            lastPrice: Number(coinGeckoMarketResult.value.currentPrice || 0),
+            priceChangePercent: Number(coinGeckoMarketResult.value.priceChangePercent || 0),
+            volume: Number(coinGeckoMarketResult.value.totalVolume || 0),
+            quoteVolume: Number(coinGeckoMarketResult.value.totalVolume || 0),
+          }
+        : null;
+
+  const priceSeries =
+    klinesResult.status === "fulfilled" && klinesResult.value.length
+      ? klinesResult.value
+      : coinGeckoChartResult.status === "fulfilled" && coinGeckoChartResult.value.length
+        ? coinGeckoChartResult.value
+        : [];
+
+  if (!ticker || !priceSeries.length || !coinGeckoBase.marketCap) {
     throw new Error("Required live market feeds are unavailable");
   }
 
-  const ticker = tickerResult.value;
-  const klines = klinesResult.value;
-  const coinGecko = coinGeckoResult.value;
   const trendSeries =
     trendResult.status === "fulfilled" && trendResult.value.length
       ? trendResult.value
-      : buildTrendFallbackFromPriceSeries(klines);
+      : buildTrendFallbackFromPriceSeries(priceSeries);
 
-  const timeline = mergeTimeline(trendSeries, klines);
+  const timeline = mergeTimeline(trendSeries, priceSeries);
   const metrics = calculateTrendMetrics({
     trendSeries,
-    priceSeries: klines,
+    priceSeries,
     ticker,
-    coinGecko,
+    coinGecko: coinGeckoBase,
   });
 
   return setCached(cacheKey, {
     profile,
     ticker,
-    coinGecko,
+    coinGecko: coinGeckoBase,
     trendSeries,
     timeline,
     metrics,

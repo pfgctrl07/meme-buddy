@@ -4,51 +4,70 @@ import { User } from "../models/User.js";
 import { accuracySummary, evaluatePrediction, generateTimeline } from "./predictionEngine.js";
 import { applyLiveSnapshotToEvent, fetchLiveCoinSnapshot } from "./liveMarketData.js";
 
+function buildLiveSeed({ id, name, asset, inviteCode, description, views, clicks, mentions, sentiment }) {
+  const model = evaluatePrediction({ views, clicks, mentions, sentiment });
+  return {
+    _id: id,
+    name,
+    asset,
+    inviteCode,
+    description,
+    participants: [],
+    participantCount: 0,
+    engagement: { views, clicks, mentions },
+    analytics: {
+      timeline: generateTimeline(mentions, clicks, views),
+      heatmap: [2, 3, 4, 4, 5, 4, 3],
+    },
+    ...model,
+  };
+}
+
 export const LIVE_MARKET_SEEDS = [
-  {
-    _id: "live-pepe",
+  buildLiveSeed({
+    id: "live-pepe",
     name: "PEPE Live Signal",
     asset: "$PEPE",
     inviteCode: "LIVE-PEPE",
     description: "Realtime PEPE intelligence based on live exchange, market, and search-interest inputs.",
-    participants: [],
-    participantCount: 0,
-    engagement: { views: 0, clicks: 0, mentions: 0 },
-    analytics: { timeline: [], heatmap: [] },
-  },
-  {
-    _id: "live-doge",
+    views: 168000,
+    clicks: 7400,
+    mentions: 28600,
+    sentiment: 73,
+  }),
+  buildLiveSeed({
+    id: "live-doge",
     name: "DOGE Live Signal",
     asset: "$DOGE",
     inviteCode: "LIVE-DOGE",
     description: "Realtime DOGE intelligence based on live exchange, market, and search-interest inputs.",
-    participants: [],
-    participantCount: 0,
-    engagement: { views: 0, clicks: 0, mentions: 0 },
-    analytics: { timeline: [], heatmap: [] },
-  },
-  {
-    _id: "live-shib",
+    views: 182000,
+    clicks: 8200,
+    mentions: 24800,
+    sentiment: 69,
+  }),
+  buildLiveSeed({
+    id: "live-shib",
     name: "SHIB Live Signal",
     asset: "$SHIB",
     inviteCode: "LIVE-SHIB",
     description: "Realtime SHIB intelligence based on live exchange, market, and search-interest inputs.",
-    participants: [],
-    participantCount: 0,
-    engagement: { views: 0, clicks: 0, mentions: 0 },
-    analytics: { timeline: [], heatmap: [] },
-  },
-  {
-    _id: "live-sol",
+    views: 126000,
+    clicks: 5100,
+    mentions: 18600,
+    sentiment: 58,
+  }),
+  buildLiveSeed({
+    id: "live-sol",
     name: "SOL Live Signal",
     asset: "$SOL",
     inviteCode: "LIVE-SOL",
     description: "Realtime SOL intelligence based on live exchange, market, and search-interest inputs.",
-    participants: [],
-    participantCount: 0,
-    engagement: { views: 0, clicks: 0, mentions: 0 },
-    analytics: { timeline: [], heatmap: [] },
-  },
+    views: 152000,
+    clicks: 6800,
+    mentions: 21400,
+    sentiment: 66,
+  }),
 ];
 
 function buildEventPayload({ name, asset, description, createdBy, views, clicks, mentions, inviteCode, sentiment }) {
@@ -154,14 +173,40 @@ export async function seedDatabase() {
 
 export async function shapeEvent(event) {
   const payload = event.toJSON ? event.toJSON() : event;
+  const fallbackModel =
+    payload.trendScore !== undefined
+      ? {}
+      : evaluatePrediction({
+          views: payload.engagement?.views || 120000,
+          clicks: payload.engagement?.clicks || 5000,
+          mentions: payload.engagement?.mentions || 18000,
+          sentiment: payload.sentiment || 60,
+        });
   const baseEvent = {
     ...payload,
+    ...fallbackModel,
+    engagement: payload.engagement || {
+      views: 120000,
+      clicks: 5000,
+      mentions: 18000,
+    },
+    analytics: payload.analytics?.timeline?.length
+      ? payload.analytics
+      : {
+          ...(payload.analytics || {}),
+          timeline: generateTimeline(
+            payload.engagement?.mentions || 18000,
+            payload.engagement?.clicks || 5000,
+            payload.engagement?.views || 120000
+          ),
+          heatmap: payload.analytics?.heatmap?.length ? payload.analytics.heatmap : [2, 3, 4, 4, 5, 4, 3],
+        },
     analysis: {
-      accuracy: accuracySummary(payload.trendScore),
-      calibratedPrediction: payload.prediction,
+      accuracy: accuracySummary(payload.trendScore ?? fallbackModel.trendScore ?? 60),
+      calibratedPrediction: payload.prediction ?? fallbackModel.prediction,
       engine: "meme-buddy-simulator-v1",
       note: "Trend score uses the formula (mentions * 0.4) + (engagement * 0.3) + (sentiment * 0.3).",
-      socialCoverage: payload.socialSignals?.sources?.map((source) => source.platform) || [],
+      socialCoverage: payload.socialSignals?.sources?.map((source) => source.platform) || fallbackModel.socialSignals?.sources?.map((source) => source.platform) || [],
     },
   };
 
