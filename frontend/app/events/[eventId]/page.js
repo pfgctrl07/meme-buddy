@@ -59,6 +59,7 @@ export default function EventDetailPage() {
                   <SignalBadge icon={TrendingUp} label={event.prediction} />
                   <SignalBadge icon={ShieldCheck} label={event.trustScore} />
                   <SignalBadge icon={Activity} label={`${event.confidence}% confidence`} />
+                  <SignalBadge icon={Sparkles} label={`${event.movement || "Sideways"} movement`} />
                 </div>
               </div>
 
@@ -157,6 +158,36 @@ export default function EventDetailPage() {
             </div>
 
             <LeaderboardPanel entries={eventData?.leaderboard || []} />
+          </section>
+
+          <section className="grid gap-4 xl:grid-cols-[1.15fr,0.85fr]">
+            <div className="glass rounded-4xl p-6">
+              <p className="text-xs uppercase tracking-[0.3em] text-muted">Social media analytics</p>
+              <h3 className="mt-2 text-xl font-semibold text-white">Source integrations and sentiment tracking</h3>
+
+              <div className="mt-6 grid gap-3 md:grid-cols-3">
+                {(event.socialSignals?.sources || []).map((source) => (
+                  <div key={source.platform} className="rounded-[1.75rem] border border-line bg-white/5 p-4">
+                    <p className="text-xs uppercase tracking-[0.24em] text-muted">{source.platform}</p>
+                    <p className="mt-3 text-2xl font-semibold text-white">{source.mentions.toLocaleString()}</p>
+                    <p className="mt-2 text-sm text-muted">{source.engagement.toLocaleString()} engagement</p>
+                    <p className="mt-2 text-sm text-brand2">{source.sentiment}/100 sentiment</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="glass rounded-4xl p-6">
+              <p className="text-xs uppercase tracking-[0.3em] text-muted">Trend alerts</p>
+              <h3 className="mt-2 text-xl font-semibold text-white">Spikes, hype cycles, and direction</h3>
+
+              <div className="mt-6 grid gap-3">
+                <DataTile label="Movement direction" value={event.movement || "Sideways"} detail="Predicted upward/downward pressure based on social signals." />
+                <DataTile label="Hype cycle" value={event.hypeCycle || "Emerging"} detail="Current stage of meme attention and crowd behavior." />
+                <DataTile label="Spike detection" value={event.spikeDetected ? "Spike detected" : "No spike"} detail="Looks for sharp changes in mentions and engagement." />
+                <DataTile label="Alert status" value={event.alert} detail="Dashboard-ready alert output for the current event." />
+              </div>
+            </div>
           </section>
         </>
       ) : null}

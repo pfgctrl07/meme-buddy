@@ -10,6 +10,16 @@ const timelineSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const sourceSchema = new mongoose.Schema(
+  {
+    platform: String,
+    mentions: Number,
+    engagement: Number,
+    sentiment: Number,
+  },
+  { _id: false }
+);
+
 const eventSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
@@ -27,6 +37,15 @@ const eventSchema = new mongoose.Schema(
       timeline: { type: [timelineSchema], default: [] },
       heatmap: { type: [Number], default: [] },
     },
+    socialSignals: {
+      sources: { type: [sourceSchema], default: [] },
+      overallSentiment: { type: Number, default: 50 },
+      totalEngagement: { type: Number, default: 0 },
+      totalMentions: { type: Number, default: 0 },
+      spikeDetected: { type: Boolean, default: false },
+      hypeCycle: { type: String, default: "Emerging" },
+      movement: { type: String, default: "Sideways" },
+    },
     trendScore: { type: Number, default: 50 },
     score: { type: Number, default: 50 },
     trustScore: { type: String, default: "Reliable" },
@@ -34,6 +53,9 @@ const eventSchema = new mongoose.Schema(
     confidence: { type: Number, default: 65 },
     prediction: { type: String, default: "Medium" },
     growthPrediction: { type: String, default: "Medium" },
+    movement: { type: String, default: "Sideways" },
+    hypeCycle: { type: String, default: "Emerging" },
+    spikeDetected: { type: Boolean, default: false },
     alert: { type: String, default: "Watchlist Drift" },
   },
   { timestamps: true }

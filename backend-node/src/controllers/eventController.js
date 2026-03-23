@@ -93,6 +93,10 @@ export async function joinEvent(req, res) {
     event.sentiment = model.sentiment;
     event.prediction = model.prediction;
     event.growthPrediction = model.growthPrediction;
+    event.movement = model.movement;
+    event.hypeCycle = model.hypeCycle;
+    event.spikeDetected = model.spikeDetected;
+    event.socialSignals = model.socialSignals;
     event.alert = model.alert;
     await event.save();
 

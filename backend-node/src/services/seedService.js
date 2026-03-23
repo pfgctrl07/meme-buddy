@@ -113,6 +113,7 @@ export function shapeEvent(event) {
       calibratedPrediction: payload.prediction,
       engine: "meme-buddy-simulator-v1",
       note: "Trend score uses the formula (mentions * 0.4) + (engagement * 0.3) + (sentiment * 0.3).",
+      socialCoverage: payload.socialSignals?.sources?.map((source) => source.platform) || [],
     },
   };
 }

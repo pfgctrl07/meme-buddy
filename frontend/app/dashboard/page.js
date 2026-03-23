@@ -29,6 +29,7 @@ export default function DashboardPage() {
     mentions: item.mentions,
   }));
   const topThree = (data?.leaderboard || []).slice(0, 3);
+  const sourceBadges = activeEvent?.socialSignals?.sources || [];
 
   return (
     <AppShell
@@ -54,7 +55,7 @@ export default function DashboardPage() {
                 Track meme momentum before the rest of the timeline catches up.
               </h2>
               <p className="mt-5 max-w-2xl text-base leading-7 text-muted">
-                Meme Buddy blends event simulation, social engagement tracking, and prediction scoring into one premium operator dashboard.
+                Meme Buddy blends social media signal tracking, sentiment analysis, hype-cycle detection, and movement prediction into one premium operator dashboard.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
@@ -64,6 +65,14 @@ export default function DashboardPage() {
                 <Link href="/discover" className="rounded-2xl border border-line bg-white/5 px-5 py-3 text-sm font-semibold text-white">
                   Explore Trends
                 </Link>
+              </div>
+
+              <div className="mt-6 flex flex-wrap gap-2">
+                {sourceBadges.map((source) => (
+                  <span key={source.platform} className="rounded-full border border-line bg-white/5 px-4 py-2 text-sm text-white">
+                    {source.platform} {source.mentions.toLocaleString()} mentions
+                  </span>
+                ))}
               </div>
             </div>
 
@@ -94,6 +103,40 @@ export default function DashboardPage() {
         </section>
       ) : null}
 
+      {activeEvent ? (
+        <section className="grid gap-4 xl:grid-cols-[1.1fr,0.9fr]">
+          <div className="glass rounded-4xl p-6">
+            <div className="mb-6">
+              <p className="text-xs uppercase tracking-[0.3em] text-muted">Social analytics</p>
+              <h3 className="mt-2 text-xl font-semibold text-white">Platform signals and trend tracking</h3>
+            </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              {(activeEvent.socialSignals?.sources || []).map((source) => (
+                <div key={source.platform} className="rounded-[1.75rem] border border-line bg-white/5 p-4">
+                  <p className="text-xs uppercase tracking-[0.24em] text-muted">{source.platform}</p>
+                  <p className="mt-3 text-2xl font-semibold text-white">{source.mentions.toLocaleString()}</p>
+                  <p className="mt-2 text-sm text-muted">{source.engagement.toLocaleString()} engagement</p>
+                  <p className="mt-2 text-sm text-brand2">{source.sentiment}/100 sentiment</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="glass rounded-4xl p-6">
+            <div className="mb-6">
+              <p className="text-xs uppercase tracking-[0.3em] text-muted">Alerts and movement</p>
+              <h3 className="mt-2 text-xl font-semibold text-white">Spike detection</h3>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <InsightTile label="Movement" value={activeEvent.movement || "Sideways"} tone={activeEvent.movement === "Upward" ? "text-green" : activeEvent.movement === "Downward" ? "text-red" : "text-yellow"} />
+              <InsightTile label="Hype cycle" value={activeEvent.hypeCycle || "Emerging"} tone="text-brand2" />
+              <InsightTile label="Spike" value={activeEvent.spikeDetected ? "Detected" : "Normal"} tone={activeEvent.spikeDetected ? "text-green" : "text-white"} />
+              <InsightTile label="Alert" value={activeEvent.alert} tone="text-yellow" />
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       <section className="grid gap-4 xl:grid-cols-[1.35fr,0.95fr]">
         <div className="glass rounded-4xl p-6">
           <div className="mb-6 flex items-center justify-between">
@@ -118,5 +161,14 @@ export default function DashboardPage() {
         <LeaderboardPanel entries={data?.leaderboard || []} compact />
       </section>
     </AppShell>
+  );
+}
+
+function InsightTile({ label, value, tone }) {
+  return (
+    <div className="rounded-[1.75rem] border border-line bg-black/10 p-4">
+      <p className="text-xs uppercase tracking-[0.24em] text-muted">{label}</p>
+      <p className={`mt-3 text-lg font-semibold ${tone}`}>{value}</p>
+    </div>
   );
 }
