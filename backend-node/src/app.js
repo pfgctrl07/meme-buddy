@@ -19,7 +19,13 @@ app.use(
         return callback(null, true);
       }
 
-      if (env.allowedOrigins.includes(origin)) {
+      const isAllowedOrigin =
+        env.allowedOrigins.includes(origin) ||
+        origin.endsWith(".vercel.app") ||
+        origin.startsWith("http://localhost:") ||
+        origin.startsWith("https://localhost:");
+
+      if (isAllowedOrigin) {
         return callback(null, true);
       }
 

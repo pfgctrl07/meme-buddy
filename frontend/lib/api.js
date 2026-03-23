@@ -18,14 +18,20 @@ export function setToken(token) {
 
 export async function apiFetch(path, options = {}) {
   const token = getToken();
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers || {}),
-    },
-    ...options,
-  });
+  let response;
+
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(options.headers || {}),
+      },
+      ...options,
+    });
+  } catch (error) {
+    throw new Error("API unreachable. Check the backend URL, CORS settings, and whether Render is awake.");
+  }
 
   const payload = await response.json().catch(() => ({}));
 
