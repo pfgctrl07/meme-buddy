@@ -18,7 +18,7 @@ export default function DiscoverPage() {
   }, [filter]);
 
   return (
-    <AppShell title="Discovery feed" eyebrow="Trending coins and hashtags">
+    <AppShell title="Live discovery feed" eyebrow="Trending meme coin signals">
       <div className="glass panel-hover rounded-4xl p-6 md:p-7">
         <div className="flex flex-wrap gap-3">
           {filters.map((item) => (

@@ -4,6 +4,53 @@ import { User } from "../models/User.js";
 import { accuracySummary, evaluatePrediction, generateTimeline } from "./predictionEngine.js";
 import { applyLiveSnapshotToEvent, fetchLiveCoinSnapshot } from "./liveMarketData.js";
 
+export const LIVE_MARKET_SEEDS = [
+  {
+    _id: "live-pepe",
+    name: "PEPE Live Signal",
+    asset: "$PEPE",
+    inviteCode: "LIVE-PEPE",
+    description: "Realtime PEPE intelligence based on live exchange, market, and search-interest inputs.",
+    participants: [],
+    participantCount: 0,
+    engagement: { views: 0, clicks: 0, mentions: 0 },
+    analytics: { timeline: [], heatmap: [] },
+  },
+  {
+    _id: "live-doge",
+    name: "DOGE Live Signal",
+    asset: "$DOGE",
+    inviteCode: "LIVE-DOGE",
+    description: "Realtime DOGE intelligence based on live exchange, market, and search-interest inputs.",
+    participants: [],
+    participantCount: 0,
+    engagement: { views: 0, clicks: 0, mentions: 0 },
+    analytics: { timeline: [], heatmap: [] },
+  },
+  {
+    _id: "live-shib",
+    name: "SHIB Live Signal",
+    asset: "$SHIB",
+    inviteCode: "LIVE-SHIB",
+    description: "Realtime SHIB intelligence based on live exchange, market, and search-interest inputs.",
+    participants: [],
+    participantCount: 0,
+    engagement: { views: 0, clicks: 0, mentions: 0 },
+    analytics: { timeline: [], heatmap: [] },
+  },
+  {
+    _id: "live-sol",
+    name: "SOL Live Signal",
+    asset: "$SOL",
+    inviteCode: "LIVE-SOL",
+    description: "Realtime SOL intelligence based on live exchange, market, and search-interest inputs.",
+    participants: [],
+    participantCount: 0,
+    engagement: { views: 0, clicks: 0, mentions: 0 },
+    analytics: { timeline: [], heatmap: [] },
+  },
+];
+
 function buildEventPayload({ name, asset, description, createdBy, views, clicks, mentions, inviteCode, sentiment }) {
   const engagement = { views, clicks, mentions, sentiment };
   const model = evaluatePrediction(engagement);

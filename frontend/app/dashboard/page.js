@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Plus } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowRight, CandlestickChart, RadioTower, Waves } from "lucide-react";
 import Link from "next/link";
 import { AppShell } from "../../components/AppShell";
-import { LeaderboardPanel } from "../../components/LeaderboardPanel";
 import { PredictionCard } from "../../components/PredictionCard";
 import { StatCard } from "../../components/StatCard";
 import { TrendChartCard } from "../../components/TrendChartCard";
@@ -16,75 +15,71 @@ export default function DashboardPage() {
   useProtectedPage();
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
+  const [selectedCoinId, setSelectedCoinId] = useState("");
 
   useEffect(() => {
     apiFetch("/dashboard")
-      .then(setData)
+      .then((payload) => {
+        setData(payload);
+        setSelectedCoinId(payload.activeCoin?._id || payload.liveCoins?.[0]?._id || "");
+      })
       .catch((err) => setError(err.message));
   }, []);
 
-  const activeEvent = data?.activeEvent;
-  const chartData = (activeEvent?.analytics?.timeline || []).map((item) => ({
+  const activeCoin = useMemo(() => {
+    const liveCoins = data?.liveCoins || [];
+    return liveCoins.find((item) => item._id === selectedCoinId) || data?.activeCoin || liveCoins[0] || null;
+  }, [data, selectedCoinId]);
+
+  const chartData = (activeCoin?.analytics?.timeline || []).map((item) => ({
     label: item.label,
     mentions: item.mentions,
   }));
-  const topThree = (data?.leaderboard || []).slice(0, 3);
-  const sourceBadges = activeEvent?.socialSignals?.sources || [];
 
   return (
     <AppShell
-      title="Command center"
-      eyebrow="AI trend operations"
+      title="Live meme coin intelligence"
+      eyebrow="Realtime market prediction"
       action={
         <Link href="/events" className="rounded-2xl bg-gradient-to-r from-brand to-brand2 px-4 py-3 text-sm font-semibold text-white">
           <span className="inline-flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Create Trend
+            Open Event Studio
+            <ArrowRight className="h-4 w-4" />
           </span>
         </Link>
       }
     >
       {error ? <div className="glass rounded-4xl p-5 text-red">{error}</div> : null}
 
-      {activeEvent ? (
+      {activeCoin ? (
         <section className="glass overflow-hidden rounded-4xl p-6 md:p-8">
-          <div className="grid gap-8 xl:grid-cols-[1.2fr,0.8fr] xl:items-end">
+          <div className="grid gap-8 xl:grid-cols-[1.15fr,0.85fr] xl:items-end">
             <div>
-              <p className="text-xs uppercase tracking-[0.34em] text-muted">Live control room</p>
+              <p className="text-xs uppercase tracking-[0.34em] text-muted">Live market mode</p>
               <h2 className="mt-4 max-w-3xl text-4xl font-semibold leading-tight text-white md:text-5xl">
-                Track meme momentum before the rest of the timeline catches up.
+                Track live meme coin momentum with the uploaded prediction pipeline.
               </h2>
               <p className="mt-5 max-w-2xl text-base leading-7 text-muted">
-                Meme Buddy blends social media signal tracking, sentiment analysis, hype-cycle detection, and movement prediction into one premium operator dashboard.
+                This dashboard is now dedicated to actual live coin monitoring. Event creation and join flows stay separate inside Event Studio.
               </p>
 
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Link href={`/events/${activeEvent._id}`} className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-bg">
-                  Open Active Event
-                </Link>
-                <Link href="/discover" className="rounded-2xl border border-line bg-white/5 px-5 py-3 text-sm font-semibold text-white">
-                  Explore Trends
-                </Link>
-              </div>
-
-              <div className="mt-6 flex flex-wrap gap-2">
-                {sourceBadges.map((source) => (
-                  <span key={source.platform} className="rounded-full border border-line bg-white/5 px-4 py-2 text-sm text-white">
-                    {source.platform} {source.mentions.toLocaleString()} mentions
-                  </span>
-                ))}
+              <div className="mt-7 flex flex-wrap gap-3">
+                <SourceBadge icon={RadioTower} label="Google Trends search-interest" />
+                <SourceBadge icon={CandlestickChart} label="Binance price and volume" />
+                <SourceBadge icon={Waves} label="CoinGecko market and community" />
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-3 xl:grid-cols-1">
-              {topThree.map((entry) => (
-                <div key={entry.rank} className="rounded-[1.75rem] border border-line bg-white/5 p-4">
-                  <p className="text-xs uppercase tracking-[0.24em] text-muted">Rank #{entry.rank}</p>
-                  <p className="mt-3 text-lg font-semibold text-white">{entry.name}</p>
-                  <p className="mt-1 text-sm text-muted">{entry.badge}</p>
-                  <p className="mt-4 text-sm font-semibold text-brand2">{entry.points} pts</p>
-                </div>
-              ))}
+            <div className="rounded-[1.9rem] border border-line bg-white/5 p-5">
+              <p className="text-xs uppercase tracking-[0.26em] text-muted">Selected coin</p>
+              <p className="mt-3 text-3xl font-semibold text-white">{activeCoin.asset}</p>
+              <p className="mt-2 text-sm text-muted">{activeCoin.description}</p>
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <MiniMetric label="Prediction" value={activeCoin.prediction} />
+                <MiniMetric label="Measured fit" value={activeCoin.analysis?.accuracy?.label || "Live"} />
+                <MiniMetric label="Trust" value={activeCoin.trustScore} />
+                <MiniMetric label="Confidence" value={`${activeCoin.confidence}%`} />
+              </div>
             </div>
           </div>
         </section>
@@ -96,79 +91,57 @@ export default function DashboardPage() {
         ))}
       </section>
 
-      {activeEvent ? (
-        <section className="grid gap-4 xl:grid-cols-[1.4fr,1fr]">
-          <TrendChartCard title="Mentions vs Time" subtitle="Realtime velocity" data={chartData} />
-          <PredictionCard event={activeEvent} />
+      {activeCoin ? (
+        <section className="grid gap-4 xl:grid-cols-[1.35fr,1fr]">
+          <TrendChartCard title="Search-interest over time" subtitle="Live Google Trends series" data={chartData} />
+          <PredictionCard event={activeCoin} />
         </section>
       ) : null}
 
-      {activeEvent ? (
-        <section className="grid gap-4 xl:grid-cols-[1.1fr,0.9fr]">
-          <div className="glass rounded-4xl p-6">
-            <div className="mb-6">
-              <p className="text-xs uppercase tracking-[0.3em] text-muted">Social analytics</p>
-              <h3 className="mt-2 text-xl font-semibold text-white">Platform signals and trend tracking</h3>
-            </div>
-            <div className="grid gap-3 md:grid-cols-3">
-              {(activeEvent.socialSignals?.sources || []).map((source) => (
-                <div key={source.platform} className="rounded-[1.75rem] border border-line bg-white/5 p-4">
-                  <p className="text-xs uppercase tracking-[0.24em] text-muted">{source.platform}</p>
-                  <p className="mt-3 text-2xl font-semibold text-white">{source.mentions.toLocaleString()}</p>
-                  <p className="mt-2 text-sm text-muted">{source.engagement.toLocaleString()} engagement</p>
-                  <p className="mt-2 text-sm text-brand2">{source.sentiment}/100 sentiment</p>
-                </div>
-              ))}
-            </div>
+      <section className="glass rounded-4xl p-6">
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-muted">Live meme coin board</p>
+            <h3 className="mt-2 text-xl font-semibold text-white">Actual market signals</h3>
+            <p className="mt-2 max-w-2xl text-sm text-muted">
+              Pick a live coin to inspect current trend score, prediction, accuracy, and source-backed signal quality.
+            </p>
           </div>
-
-          <div className="glass rounded-4xl p-6">
-            <div className="mb-6">
-              <p className="text-xs uppercase tracking-[0.3em] text-muted">Alerts and movement</p>
-              <h3 className="mt-2 text-xl font-semibold text-white">Spike detection</h3>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <InsightTile label="Movement" value={activeEvent.movement || "Sideways"} tone={activeEvent.movement === "Upward" ? "text-green" : activeEvent.movement === "Downward" ? "text-red" : "text-yellow"} />
-              <InsightTile label="Hype cycle" value={activeEvent.hypeCycle || "Emerging"} tone="text-brand2" />
-              <InsightTile label="Spike" value={activeEvent.spikeDetected ? "Detected" : "Normal"} tone={activeEvent.spikeDetected ? "text-green" : "text-white"} />
-              <InsightTile label="Alert" value={activeEvent.alert} tone="text-yellow" />
-            </div>
-          </div>
-        </section>
-      ) : null}
-
-      <section className="grid gap-4 xl:grid-cols-[1.35fr,0.95fr]">
-        <div className="glass rounded-4xl p-6">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-muted">Trending events</p>
-              <h3 className="mt-2 text-xl font-semibold text-white">Hot simulations</h3>
-              <p className="mt-2 max-w-xl text-sm text-muted">
-                Trending events are ranked by momentum, trust, and operator participation so the strongest startup-style signals float to the top.
-              </p>
-            </div>
-            <Link href="/discover" className="text-sm text-brand2">
-              View all
-            </Link>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            {(data?.trendingEvents || []).map((event) => (
-              <TrendEventCard key={event._id} event={event} />
-            ))}
-          </div>
+          <Link href="/discover" className="text-sm text-brand2">
+            Open discovery feed
+          </Link>
         </div>
 
-        <LeaderboardPanel entries={data?.leaderboard || []} compact />
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {(data?.liveCoins || []).map((coin) => (
+            <TrendEventCard
+              key={coin._id}
+              event={coin}
+              interactive
+              active={coin._id === activeCoin?._id}
+              onClick={() => setSelectedCoinId(coin._id)}
+            />
+          ))}
+        </div>
       </section>
     </AppShell>
   );
 }
 
-function InsightTile({ label, value, tone }) {
+function SourceBadge({ icon: Icon, label }) {
   return (
-    <div className="rounded-[1.75rem] border border-line bg-black/10 p-4">
+    <div className="inline-flex items-center gap-2 rounded-full border border-line bg-white/5 px-4 py-2 text-sm text-white">
+      <Icon className="h-4 w-4 text-brand2" />
+      {label}
+    </div>
+  );
+}
+
+function MiniMetric({ label, value }) {
+  return (
+    <div className="rounded-3xl border border-line bg-black/10 px-4 py-3">
       <p className="text-xs uppercase tracking-[0.24em] text-muted">{label}</p>
-      <p className={`mt-3 text-lg font-semibold ${tone}`}>{value}</p>
+      <p className="mt-2 text-base font-semibold text-white">{value}</p>
     </div>
   );
 }
