@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: meme-buddy-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT wsgi:app
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
+      - key: FLASK_DEBUG
+        value: "0"
+
+  - type: web
+    name: meme-buddy-web
+    runtime: static
+    buildCommand: npm install && npm run export:web
+    staticPublishPath: dist
+    pullRequestPreviewsEnabled: false
+    envVars:
+      - key: EXPO_PUBLIC_API_BASE_URL
+        sync: false

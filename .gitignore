@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.expo/
+.idea/
+.DS_Store
+*.pyc
+__pycache__/
+backend_inspect/
+.env
+backend/meme_buddy.db
