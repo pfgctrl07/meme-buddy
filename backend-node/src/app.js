@@ -2,6 +2,7 @@ import cors from "cors";
 import express from "express";
 import morgan from "morgan";
 import authRoutes from "./routes/authRoutes.js";
+import alertRoutes from "./routes/alertRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import discoverRoutes from "./routes/discoverRoutes.js";
 import eventRoutes from "./routes/eventRoutes.js";
@@ -60,6 +61,7 @@ app.use((req, res, next) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/alerts", alertRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/discover", discoverRoutes);

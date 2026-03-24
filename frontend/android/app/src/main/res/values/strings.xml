@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Meme Buddy</string>
+    <string name="title_activity_main">Meme Buddy</string>
+    <string name="package_name">com.prajithcmd.memebuddy</string>
+    <string name="custom_url_scheme">com.prajithcmd.memebuddy</string>
+</resources>

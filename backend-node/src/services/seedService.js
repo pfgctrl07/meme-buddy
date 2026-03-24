@@ -37,6 +37,36 @@ function buildPrototypeEngines({ prediction, trustScore, verification }) {
   };
 }
 
+function buildPrototypeAlert({ prediction, trustScore, verification }) {
+  if (verification.botRiskScore >= 55 || trustScore === "Overhyped") {
+    return {
+      side: "SELL",
+      action: "Avoid / reduce exposure",
+      urgency: "high",
+      summary: "Prototype heuristics see weak trust or manipulation risk.",
+      reason: "Pump risk or low trust.",
+    };
+  }
+
+  if (prediction === "High") {
+    return {
+      side: "BUY",
+      action: "Buy",
+      urgency: "medium",
+      summary: "Prototype momentum is supportive enough for a buy-side alert.",
+      reason: "Trend score and trust are aligned.",
+    };
+  }
+
+  return {
+    side: "WATCH",
+    action: "Wait and monitor",
+    urgency: "low",
+    summary: "No strong buy or sell signal yet.",
+    reason: "Setup still needs confirmation.",
+  };
+}
+
 function buildLiveSeed({ id, name, asset, inviteCode, description, views, clicks, mentions, sentiment }) {
   const model = evaluatePrediction({ views, clicks, mentions, sentiment });
   const verification = verificationSummary({ mentions, clicks, sentiment });
@@ -56,6 +86,11 @@ function buildLiveSeed({ id, name, asset, inviteCode, description, views, clicks
     ...model,
     verification,
     engines: buildPrototypeEngines({
+      prediction: model.prediction,
+      trustScore: model.trustScore,
+      verification,
+    }),
+    alertRecommendation: buildPrototypeAlert({
       prediction: model.prediction,
       trustScore: model.trustScore,
       verification,
@@ -278,6 +313,19 @@ export async function shapeEvent(event) {
     engines:
       payload.engines ||
       buildPrototypeEngines({
+        prediction: payload.prediction || fallbackModel.prediction || "Medium",
+        trustScore: payload.trustScore || fallbackModel.trustScore || "Watchlist",
+        verification:
+          payload.verification ||
+          verificationSummary({
+            mentions: payload.engagement?.mentions || 18000,
+            clicks: payload.engagement?.clicks || 5000,
+            sentiment: payload.sentiment || fallbackModel.sentiment || 60,
+          }),
+      }),
+    alertRecommendation:
+      payload.alertRecommendation ||
+      buildPrototypeAlert({
         prediction: payload.prediction || fallbackModel.prediction || "Medium",
         trustScore: payload.trustScore || fallbackModel.trustScore || "Watchlist",
         verification:

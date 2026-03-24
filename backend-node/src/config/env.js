@@ -13,4 +13,9 @@ export const env = {
   jwtSecret: process.env.JWT_SECRET || "meme-buddy-secret",
   clientUrl: process.env.CLIENT_URL || "http://localhost:3000",
   allowedOrigins,
+  smtpHost: process.env.SMTP_HOST || "",
+  smtpPort: process.env.SMTP_PORT || "",
+  smtpUser: process.env.SMTP_USER || "",
+  smtpPass: process.env.SMTP_PASS || "",
+  smtpFrom: process.env.SMTP_FROM || "",
 };

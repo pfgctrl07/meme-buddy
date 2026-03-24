@@ -16,6 +16,7 @@ export default function DashboardPage() {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
   const [selectedCoinId, setSelectedCoinId] = useState("");
+  const [mailStatus, setMailStatus] = useState("");
 
   useEffect(() => {
     apiFetch("/dashboard")
@@ -79,6 +80,31 @@ export default function DashboardPage() {
                 <MiniMetric label="Measured fit" value={activeCoin.analysis?.accuracy?.label || "Live"} />
                 <MiniMetric label="Trust" value={activeCoin.trustScore} />
                 <MiniMetric label="Confidence" value={`${activeCoin.confidence}%`} />
+              </div>
+              <div className="mt-5 rounded-[1.5rem] border border-line bg-black/10 p-4">
+                <p className="text-xs uppercase tracking-[0.24em] text-muted">Alert recommendation</p>
+                <p className="mt-2 text-lg font-semibold text-white">
+                  {activeCoin.alertRecommendation?.side || "WATCH"} • {activeCoin.alertRecommendation?.action || "Wait and monitor"}
+                </p>
+                <p className="mt-2 text-sm text-muted">{activeCoin.alertRecommendation?.summary || "No current email alert recommendation."}</p>
+                <p className="mt-2 text-sm text-brand2">{activeCoin.alertRecommendation?.reason || ""}</p>
+                <button
+                  className="mt-4 rounded-2xl bg-gradient-to-r from-brand to-brand2 px-4 py-3 text-sm font-semibold text-white"
+                  onClick={async () => {
+                    try {
+                      const payload = await apiFetch("/alerts/email", {
+                        method: "POST",
+                        body: JSON.stringify({ coinId: activeCoin._id }),
+                      });
+                      setMailStatus(payload.message);
+                    } catch (mailError) {
+                      setMailStatus(mailError.message);
+                    }
+                  }}
+                >
+                  Send Alert Mail
+                </button>
+                {mailStatus ? <p className="mt-3 text-sm text-muted">{mailStatus}</p> : null}
               </div>
               <div className="mt-5 rounded-[1.5rem] border border-line bg-black/10 p-4">
                 <p className="text-xs uppercase tracking-[0.24em] text-muted">Trend verification</p>

@@ -374,6 +374,44 @@ function buildEngineOutputs({ trendScore, trendMomentum, currentTrend, priceChan
   };
 }
 
+function buildAlertRecommendation({ engines, verification, trendScore, priceChangePercent }) {
+  if (
+    (priceChangePercent <= -7 && verification.authenticityScore >= 62 && engines.signalNoise.label !== "Unreliable") ||
+    (engines.hypeReality.label === "Real Growth" && engines.timing.phase === "Early")
+  ) {
+    return {
+      side: "BUY",
+      action: "Buy the dip / early strength",
+      urgency: "high",
+      summary: "Price has pulled back or is still early while the trend quality remains strong.",
+      reason: "Healthy authenticity with supportive trend conditions.",
+    };
+  }
+
+  if (
+    priceChangePercent >= 12 ||
+    engines.hypeReality.label === "Too Late" ||
+    engines.pumpDump.risk === "High" ||
+    engines.beginnerDecision.action === "Avoid"
+  ) {
+    return {
+      side: "SELL",
+      action: "Take profit / reduce exposure",
+      urgency: "high",
+      summary: "The move looks crowded, late, or exposed to pump-and-dump risk.",
+      reason: "Late timing or manipulation risk is elevated.",
+    };
+  }
+
+  return {
+    side: "WATCH",
+    action: "Wait and monitor",
+    urgency: trendScore >= 70 ? "medium" : "low",
+    summary: "The setup is active, but it does not yet justify a strong buy or sell alert.",
+    reason: "Momentum is mixed and needs more confirmation.",
+  };
+}
+
 function calculateTrendMetrics({ trendSeries, priceSeries, ticker, coinGecko }) {
   const trendValues = trendSeries.map((item) => item.value);
   const volumeValues = priceSeries.map((item) => item.volume);
@@ -508,6 +546,12 @@ function calculateTrendMetrics({ trendSeries, priceSeries, ticker, coinGecko }) 
     accuracy,
     hypeCycle,
   });
+  const alertRecommendation = buildAlertRecommendation({
+    engines,
+    verification,
+    trendScore,
+    priceChangePercent: ticker.priceChangePercent,
+  });
 
   return {
     mentionsScore,
@@ -526,6 +570,7 @@ function calculateTrendMetrics({ trendSeries, priceSeries, ticker, coinGecko }) 
     accuracy,
     alert,
     engines,
+    alertRecommendation,
   };
 }
 
@@ -676,6 +721,7 @@ export function applyLiveSnapshotToEvent(eventLike, snapshot) {
       partialFallback: Boolean(snapshot.partialFallback),
       verification: snapshot.metrics.verification,
       engines: snapshot.metrics.engines,
+      alertRecommendation: snapshot.metrics.alertRecommendation,
       formulaBreakdown: {
         mentions: snapshot.metrics.mentionsScore,
         engagement: snapshot.metrics.engagementScore,
@@ -689,5 +735,6 @@ export function applyLiveSnapshotToEvent(eventLike, snapshot) {
     },
     verification: snapshot.metrics.verification,
     engines: snapshot.metrics.engines,
+    alertRecommendation: snapshot.metrics.alertRecommendation,
   };
 }

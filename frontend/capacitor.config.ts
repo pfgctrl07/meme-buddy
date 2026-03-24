@@ -1,0 +1,14 @@
+import type { CapacitorConfig } from '@capacitor/cli';
+
+const config: CapacitorConfig = {
+  appId: 'com.prajithcmd.memebuddy',
+  appName: 'Meme Buddy',
+  webDir: 'out',
+  server: {
+    url: 'https://meme-buddy-9tizpv4nc-prajithcmd-3543s-projects.vercel.app',
+    cleartext: true,
+    allowNavigation: ['*']
+  }
+};
+
+export default config;
