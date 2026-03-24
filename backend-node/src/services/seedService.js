@@ -4,8 +4,42 @@ import { User } from "../models/User.js";
 import { accuracySummary, evaluatePrediction, generateTimeline, verificationSummary } from "./predictionEngine.js";
 import { applyLiveSnapshotToEvent, fetchLiveCoinSnapshot } from "./liveMarketData.js";
 
+function buildPrototypeEngines({ prediction, trustScore, verification }) {
+  return {
+    hypeReality: {
+      label: trustScore === "Reliable" ? "Real Growth" : trustScore === "Overhyped" ? "Fake Hype" : "Watchlist",
+      tone: trustScore === "Reliable" ? "success" : trustScore === "Overhyped" ? "danger" : "neutral",
+      summary: trustScore === "Reliable" ? "Prototype momentum and trust are aligned." : "Prototype momentum needs more review.",
+      takeaway: trustScore === "Reliable" ? "Healthy trend" : "Needs review",
+    },
+    timing: {
+      phase: prediction === "High" ? "Mid" : prediction === "Low" ? "Late" : "Early",
+      message: prediction === "High" ? "Momentum is active but not fully exhausted." : prediction === "Low" ? "Entry looks late." : "Setup is still forming.",
+      risk: prediction === "Low" ? "High dump risk" : "Balanced risk",
+    },
+    pumpDump: {
+      status: verification.botRiskScore >= 55 ? "Possible coordinated pump" : "No major pump pattern",
+      risk: verification.botRiskScore >= 55 ? "High" : "Moderate",
+      detail: verification.botRiskScore >= 55 ? "Prototype heuristics see manipulation risk." : "Prototype heuristics do not strongly match a pump pattern.",
+    },
+    lifecycle: {
+      phase: prediction === "High" ? "Growth" : prediction === "Low" ? "Peak" : "Early",
+      message: prediction === "High" ? "Trend is in growth mode." : prediction === "Low" ? "Trend may already be crowded." : "Trend is still emerging.",
+    },
+    signalNoise: {
+      label: verification.authenticityScore >= 70 ? "High Signal" : verification.botRiskScore >= 55 ? "Unreliable" : "Noisy Trend",
+      summary: verification.authenticityScore >= 70 ? "Signal looks cleaner than the surrounding noise." : "This setup needs more filtering.",
+    },
+    beginnerDecision: {
+      action: verification.botRiskScore >= 55 ? "Avoid" : prediction === "High" ? "Buy" : "Risk",
+      summary: verification.botRiskScore >= 55 ? "Risk is too high for a simple entry." : prediction === "High" ? "Momentum is cleaner and more actionable." : "Only suitable with caution.",
+    },
+  };
+}
+
 function buildLiveSeed({ id, name, asset, inviteCode, description, views, clicks, mentions, sentiment }) {
   const model = evaluatePrediction({ views, clicks, mentions, sentiment });
+  const verification = verificationSummary({ mentions, clicks, sentiment });
   return {
     _id: id,
     name,
@@ -20,6 +54,12 @@ function buildLiveSeed({ id, name, asset, inviteCode, description, views, clicks
       heatmap: [2, 3, 4, 4, 5, 4, 3],
     },
     ...model,
+    verification,
+    engines: buildPrototypeEngines({
+      prediction: model.prediction,
+      trustScore: model.trustScore,
+      verification,
+    }),
   };
 }
 
@@ -214,6 +254,19 @@ export async function shapeEvent(event) {
           clicks: payload.engagement?.clicks || 5000,
           sentiment: payload.sentiment || fallbackModel.sentiment || 60,
         }),
+      engines:
+        payload.engines ||
+        buildPrototypeEngines({
+          prediction: payload.prediction || fallbackModel.prediction || "Medium",
+          trustScore: payload.trustScore || fallbackModel.trustScore || "Watchlist",
+          verification:
+            payload.verification ||
+            verificationSummary({
+              mentions: payload.engagement?.mentions || 18000,
+              clicks: payload.engagement?.clicks || 5000,
+              sentiment: payload.sentiment || fallbackModel.sentiment || 60,
+            }),
+        }),
     },
     verification:
       payload.verification ||
@@ -221,6 +274,19 @@ export async function shapeEvent(event) {
         mentions: payload.engagement?.mentions || 18000,
         clicks: payload.engagement?.clicks || 5000,
         sentiment: payload.sentiment || fallbackModel.sentiment || 60,
+      }),
+    engines:
+      payload.engines ||
+      buildPrototypeEngines({
+        prediction: payload.prediction || fallbackModel.prediction || "Medium",
+        trustScore: payload.trustScore || fallbackModel.trustScore || "Watchlist",
+        verification:
+          payload.verification ||
+          verificationSummary({
+            mentions: payload.engagement?.mentions || 18000,
+            clicks: payload.engagement?.clicks || 5000,
+            sentiment: payload.sentiment || fallbackModel.sentiment || 60,
+          }),
       }),
   };
 

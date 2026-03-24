@@ -106,6 +106,53 @@ export default function DashboardPage() {
         </section>
       ) : null}
 
+      {activeCoin?.engines ? (
+        <section className="grid gap-4 xl:grid-cols-3">
+          <EngineCard
+            title="Hype vs Reality"
+            value={activeCoin.engines.hypeReality?.label}
+            detail={activeCoin.engines.hypeReality?.summary}
+            footer={activeCoin.engines.hypeReality?.takeaway}
+            tone={activeCoin.engines.hypeReality?.tone}
+          />
+          <EngineCard
+            title="Hype Timing"
+            value={activeCoin.engines.timing?.phase}
+            detail={activeCoin.engines.timing?.message}
+            footer={activeCoin.engines.timing?.risk}
+            tone={activeCoin.engines.timing?.phase === "Late" ? "warning" : activeCoin.engines.timing?.phase === "Early" ? "success" : "neutral"}
+          />
+          <EngineCard
+            title="Pump & Dump"
+            value={activeCoin.engines.pumpDump?.status}
+            detail={activeCoin.engines.pumpDump?.detail}
+            footer={`${activeCoin.engines.pumpDump?.risk || "Moderate"} risk`}
+            tone={activeCoin.engines.pumpDump?.risk === "High" ? "danger" : "neutral"}
+          />
+          <EngineCard
+            title="Lifecycle"
+            value={activeCoin.engines.lifecycle?.phase}
+            detail={activeCoin.engines.lifecycle?.message}
+            footer="Early → Growth → Peak → Dump"
+            tone={activeCoin.engines.lifecycle?.phase === "Growth" ? "success" : activeCoin.engines.lifecycle?.phase === "Peak" || activeCoin.engines.lifecycle?.phase === "Dump" ? "danger" : "neutral"}
+          />
+          <EngineCard
+            title="Signal vs Noise"
+            value={activeCoin.engines.signalNoise?.label}
+            detail={activeCoin.engines.signalNoise?.summary}
+            footer={`Trust: ${activeCoin.trustScore}`}
+            tone={activeCoin.engines.signalNoise?.label === "High Signal" ? "success" : activeCoin.engines.signalNoise?.label === "Unreliable" ? "danger" : "neutral"}
+          />
+          <EngineCard
+            title="Beginner Decision"
+            value={activeCoin.engines.beginnerDecision?.action}
+            detail={activeCoin.engines.beginnerDecision?.summary}
+            footer="Simple action output"
+            tone={activeCoin.engines.beginnerDecision?.action === "Buy" ? "success" : activeCoin.engines.beginnerDecision?.action === "Avoid" ? "danger" : "warning"}
+          />
+        </section>
+      ) : null}
+
       <section className="glass rounded-4xl p-6">
         <div className="mb-6 flex items-center justify-between">
           <div>
@@ -150,6 +197,26 @@ function MiniMetric({ label, value }) {
     <div className="rounded-3xl border border-line bg-black/10 px-4 py-3">
       <p className="text-xs uppercase tracking-[0.24em] text-muted">{label}</p>
       <p className="mt-2 text-base font-semibold text-white">{value}</p>
+    </div>
+  );
+}
+
+function EngineCard({ title, value, detail, footer, tone = "neutral" }) {
+  const toneClass =
+    tone === "success"
+      ? "text-green"
+      : tone === "danger"
+        ? "text-red"
+        : tone === "warning"
+          ? "text-yellow"
+          : "text-white";
+
+  return (
+    <div className="glass rounded-4xl p-5 md:p-6">
+      <p className="text-xs uppercase tracking-[0.26em] text-muted">{title}</p>
+      <p className={`mt-4 text-2xl font-semibold ${toneClass}`}>{value}</p>
+      <p className="mt-3 text-sm leading-6 text-muted">{detail}</p>
+      <p className="mt-4 text-sm font-medium text-brand2">{footer}</p>
     </div>
   );
 }

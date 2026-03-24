@@ -273,6 +273,107 @@ function classifyVerification({ trendMomentum, volumeRatio, communitySentiment, 
   };
 }
 
+function buildEngineOutputs({ trendScore, trendMomentum, currentTrend, priceChangePercent, volumeRatio, communitySentiment, trustScore, verification, accuracy, hypeCycle }) {
+  let hypeReality;
+  if (priceChangePercent >= 4 && priceChangePercent <= 14 && trendMomentum >= 4 && verification.authenticityScore >= 65 && trustScore === "Reliable") {
+    hypeReality = {
+      label: "Real Growth",
+      tone: "success",
+      summary: "Hype is increasing and price is rising in a healthier range.",
+      takeaway: "Healthy trend",
+    };
+  } else if (verification.botRiskScore >= 58 || volumeRatio > 3 || (currentTrend >= 78 && priceChangePercent <= 0)) {
+    hypeReality = {
+      label: "Fake Hype",
+      tone: "danger",
+      summary: "Attention is high but price structure and trust are not supporting it cleanly.",
+      takeaway: "Manipulation / pump signal",
+    };
+  } else if (priceChangePercent >= 18 || hypeCycle === "Distribution") {
+    hypeReality = {
+      label: "Too Late",
+      tone: "warning",
+      summary: "The move already looks crowded and the reward-to-risk is slipping.",
+      takeaway: "Late entry risk",
+    };
+  } else {
+    hypeReality = {
+      label: "Watchlist",
+      tone: "neutral",
+      summary: "The setup is forming but still needs more clean confirmation.",
+      takeaway: "Monitor closely",
+    };
+  }
+
+  let timing;
+  if (currentTrend < 40 && trendMomentum > 0 && priceChangePercent > -2) {
+    timing = { phase: "Early", message: "Interest is building before the crowd is fully in.", risk: "Lower crowding risk" };
+  } else if (currentTrend < 72 && priceChangePercent < 15) {
+    timing = { phase: "Mid", message: "Momentum is established, but the move is not fully exhausted.", risk: "Balanced risk" };
+  } else {
+    timing = { phase: "Late", message: "The trend is crowded and unwind risk is elevated.", risk: "High dump risk" };
+  }
+
+  let pumpDump;
+  if (verification.botRiskScore >= 64 || (volumeRatio > 3.3 && communitySentiment < 45)) {
+    pumpDump = {
+      status: "Possible coordinated pump",
+      risk: "High",
+      detail: "Sudden hype, stretched activity, and weaker trust are lining up like a pump pattern.",
+    };
+  } else if (priceChangePercent <= -10 && currentTrend >= 60) {
+    pumpDump = {
+      status: "Post-spike unwind",
+      risk: "High",
+      detail: "The move is already rolling over after a crowded run-up.",
+    };
+  } else {
+    pumpDump = {
+      status: "No major pump pattern",
+      risk: "Moderate",
+      detail: "Current activity does not strongly match a coordinated pump-and-dump pattern.",
+    };
+  }
+
+  let lifecycle;
+  if (priceChangePercent <= -8 && trendMomentum <= 0) {
+    lifecycle = { phase: "Dump", message: "Attention is fading and downside pressure is dominating." };
+  } else if (currentTrend >= 76 && priceChangePercent >= 10) {
+    lifecycle = { phase: "Peak", message: "The coin is in a crowded peak phase with elevated reversal risk." };
+  } else if (currentTrend >= 42 && trendMomentum >= 0) {
+    lifecycle = { phase: "Growth", message: "The trend is still expanding with healthier participation." };
+  } else {
+    lifecycle = { phase: "Early", message: "The setup is still emerging before full breakout participation." };
+  }
+
+  let signalNoise;
+  if (verification.authenticityScore >= 72 && trustScore === "Reliable" && (accuracy?.value ?? 0) >= 55) {
+    signalNoise = { label: "High Signal", summary: "Useful signal is stronger than the surrounding market noise." };
+  } else if (verification.botRiskScore >= 58 || trustScore === "Overhyped") {
+    signalNoise = { label: "Unreliable", summary: "Too much noise or manipulation risk is contaminating the signal." };
+  } else {
+    signalNoise = { label: "Noisy Trend", summary: "There is signal here, but it is mixed with weaker quality momentum." };
+  }
+
+  let beginnerDecision;
+  if (hypeReality.label === "Real Growth" && timing.phase !== "Late" && pumpDump.risk !== "High") {
+    beginnerDecision = { action: "Buy", summary: "Momentum is cleaner, trust is healthier, and it is not obviously crowded yet." };
+  } else if (hypeReality.label === "Fake Hype" || hypeReality.label === "Too Late" || pumpDump.risk === "High") {
+    beginnerDecision = { action: "Avoid", summary: "Risk is too high for a simple entry because hype quality is weak or timing is late." };
+  } else {
+    beginnerDecision = { action: "Risk", summary: "The setup is tradable only if the user accepts higher uncertainty and monitors it closely." };
+  }
+
+  return {
+    hypeReality,
+    timing,
+    pumpDump,
+    lifecycle,
+    signalNoise,
+    beginnerDecision,
+  };
+}
+
 function calculateTrendMetrics({ trendSeries, priceSeries, ticker, coinGecko }) {
   const trendValues = trendSeries.map((item) => item.value);
   const volumeValues = priceSeries.map((item) => item.volume);
@@ -395,6 +496,18 @@ function calculateTrendMetrics({ trendSeries, priceSeries, ticker, coinGecko }) 
   };
 
   const alert = prediction === "High" ? "Strong Growth Signal" : prediction === "Low" ? "Decline Warning" : "Momentum Cooling";
+  const engines = buildEngineOutputs({
+    trendScore,
+    trendMomentum,
+    currentTrend,
+    priceChangePercent: ticker.priceChangePercent,
+    volumeRatio,
+    communitySentiment,
+    trustScore,
+    verification,
+    accuracy,
+    hypeCycle,
+  });
 
   return {
     mentionsScore,
@@ -412,6 +525,7 @@ function calculateTrendMetrics({ trendSeries, priceSeries, ticker, coinGecko }) 
     socialSignals,
     accuracy,
     alert,
+    engines,
   };
 }
 
@@ -561,6 +675,7 @@ export function applyLiveSnapshotToEvent(eventLike, snapshot) {
       liveData: true,
       partialFallback: Boolean(snapshot.partialFallback),
       verification: snapshot.metrics.verification,
+      engines: snapshot.metrics.engines,
       formulaBreakdown: {
         mentions: snapshot.metrics.mentionsScore,
         engagement: snapshot.metrics.engagementScore,
@@ -573,5 +688,6 @@ export function applyLiveSnapshotToEvent(eventLike, snapshot) {
       },
     },
     verification: snapshot.metrics.verification,
+    engines: snapshot.metrics.engines,
   };
 }

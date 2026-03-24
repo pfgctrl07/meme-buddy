@@ -207,6 +207,17 @@ export default function EventDetailPage() {
               </div>
             </div>
           </section>
+
+          {event.engines ? (
+            <section className="grid gap-4 xl:grid-cols-3">
+              <DataTile label="Hype vs Reality" value={event.engines.hypeReality?.label} detail={event.engines.hypeReality?.summary} />
+              <DataTile label="Timing" value={event.engines.timing?.phase} detail={event.engines.timing?.message} />
+              <DataTile label="Pump & Dump" value={event.engines.pumpDump?.status} detail={event.engines.pumpDump?.detail} />
+              <DataTile label="Lifecycle" value={event.engines.lifecycle?.phase} detail={event.engines.lifecycle?.message} />
+              <DataTile label="Signal vs Noise" value={event.engines.signalNoise?.label} detail={event.engines.signalNoise?.summary} />
+              <DataTile label="Beginner Decision" value={event.engines.beginnerDecision?.action} detail={event.engines.beginnerDecision?.summary} />
+            </section>
+          ) : null}
         </>
       ) : null}
     </AppShell>
