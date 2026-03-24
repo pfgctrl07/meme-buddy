@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { Event } from "../models/Event.js";
 import { User } from "../models/User.js";
-import { accuracySummary, evaluatePrediction, generateTimeline } from "./predictionEngine.js";
+import { accuracySummary, evaluatePrediction, generateTimeline, verificationSummary } from "./predictionEngine.js";
 import { applyLiveSnapshotToEvent, fetchLiveCoinSnapshot } from "./liveMarketData.js";
 
 function buildLiveSeed({ id, name, asset, inviteCode, description, views, clicks, mentions, sentiment }) {
@@ -207,7 +207,21 @@ export async function shapeEvent(event) {
       engine: "meme-buddy-simulator-v1",
       note: "Trend score uses the formula (mentions * 0.4) + (engagement * 0.3) + (sentiment * 0.3).",
       socialCoverage: payload.socialSignals?.sources?.map((source) => source.platform) || fallbackModel.socialSignals?.sources?.map((source) => source.platform) || [],
+      verification:
+        payload.verification ||
+        verificationSummary({
+          mentions: payload.engagement?.mentions || 18000,
+          clicks: payload.engagement?.clicks || 5000,
+          sentiment: payload.sentiment || fallbackModel.sentiment || 60,
+        }),
     },
+    verification:
+      payload.verification ||
+      verificationSummary({
+        mentions: payload.engagement?.mentions || 18000,
+        clicks: payload.engagement?.clicks || 5000,
+        sentiment: payload.sentiment || fallbackModel.sentiment || 60,
+      }),
   };
 
   try {

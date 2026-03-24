@@ -152,6 +152,16 @@ export default function EventDetailPage() {
                 <DataTile label="Confidence" value={`${event.confidence}%`} detail="Model certainty based on the final trend score." />
                 <DataTile label="Sentiment" value={`${event.sentiment ?? 50}/100`} detail="Sentiment contribution blended from price action and community health." />
                 <DataTile label="Measured fit" value={event.analysis?.accuracy?.label || "Unverified"} detail="Recent interval hit-rate using live series." />
+                <DataTile
+                  label="Verification"
+                  value={event.verification?.classification || "Needs Human Review"}
+                  detail={`Authenticity ${event.verification?.authenticityScore ?? 0}/100 • Bot risk ${event.verification?.botRiskScore ?? 0}/100`}
+                />
+                <DataTile
+                  label="Reviewer action"
+                  value={event.verification?.reviewerAction || "Human moderation recommended"}
+                  detail={(event.verification?.reasons || []).join(", ") || "No verification detail available yet."}
+                />
               </div>
 
               <div className="mt-6 rounded-[1.75rem] border border-line bg-white/5 p-5">
@@ -193,6 +203,7 @@ export default function EventDetailPage() {
                 <DataTile label="Hype cycle" value={event.hypeCycle || "Emerging"} detail="Current stage of meme attention and crowd behavior." />
                 <DataTile label="Spike detection" value={event.spikeDetected ? "Spike detected" : "No spike"} detail="Looks for sharp changes in mentions and engagement." />
                 <DataTile label="Alert status" value={event.alert} detail="Dashboard-ready alert output for the current event." />
+                <DataTile label="Origin check" value={event.verification?.classification || "Needs Human Review"} detail={event.verification?.verifiedBy || "Rule-based model"} />
               </div>
             </div>
           </section>

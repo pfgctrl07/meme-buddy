@@ -37,6 +37,14 @@ export function TrendEventCard({ event, interactive = false, active = false, onC
         <SmallMetric label="Mentions" value={event.engagement?.mentions || 0} />
         <SmallMetric label="Confidence" value={`${event.confidence}%`} />
       </div>
+
+      <div className="mt-4 rounded-3xl border border-line bg-black/10 px-4 py-3">
+        <p className="text-xs uppercase tracking-[0.24em] text-muted">Verification</p>
+        <p className="mt-2 text-base font-semibold text-white">{event.verification?.classification || "Needs Human Review"}</p>
+        <p className="mt-2 text-sm text-muted">
+          Authenticity {event.verification?.authenticityScore ?? 0}/100 • Bot risk {event.verification?.botRiskScore ?? 0}/100
+        </p>
+      </div>
     </Container>
   );
 }

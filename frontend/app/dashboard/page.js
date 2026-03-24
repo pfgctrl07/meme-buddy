@@ -80,6 +80,14 @@ export default function DashboardPage() {
                 <MiniMetric label="Trust" value={activeCoin.trustScore} />
                 <MiniMetric label="Confidence" value={`${activeCoin.confidence}%`} />
               </div>
+              <div className="mt-5 rounded-[1.5rem] border border-line bg-black/10 p-4">
+                <p className="text-xs uppercase tracking-[0.24em] text-muted">Trend verification</p>
+                <p className="mt-2 text-lg font-semibold text-white">{activeCoin.verification?.classification || "Needs Human Review"}</p>
+                <p className="mt-2 text-sm text-muted">
+                  Authenticity {activeCoin.verification?.authenticityScore ?? 0}/100 • Bot risk {activeCoin.verification?.botRiskScore ?? 0}/100
+                </p>
+                <p className="mt-2 text-sm text-brand2">{activeCoin.verification?.reviewerAction || "Human moderation recommended"}</p>
+              </div>
             </div>
           </div>
         </section>

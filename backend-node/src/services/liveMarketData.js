@@ -238,6 +238,41 @@ function bucketFromMove(changePct) {
   return "Medium";
 }
 
+function classifyVerification({ trendMomentum, volumeRatio, communitySentiment, communityStrength, currentTrend, priceChangePercent }) {
+  let botRisk = 0;
+
+  if (volumeRatio > 3.2) botRisk += 28;
+  else if (volumeRatio > 2.2) botRisk += 16;
+
+  if (currentTrend >= 75 && communitySentiment < 45) botRisk += 20;
+  if (Math.abs(priceChangePercent) > 14) botRisk += 14;
+  if (trendMomentum > 22 && communityStrength < 35) botRisk += 22;
+  if (communityStrength < 22) botRisk += 12;
+  if (communitySentiment < 35) botRisk += 10;
+
+  const authenticityScore = clamp(Math.round(100 - botRisk), 8, 96);
+  const classification =
+    authenticityScore >= 72 ? "Human Verified" : authenticityScore <= 42 ? "Likely Bot / AI Amplified" : "Needs Human Review";
+  const reviewerAction =
+    authenticityScore >= 72 ? "Low priority review" : authenticityScore <= 42 ? "Manual verification recommended" : "Human moderation recommended";
+
+  const reasons = [];
+  if (volumeRatio > 2.2) reasons.push("engagement volume is outpacing the recent baseline");
+  if (currentTrend >= 75 && communitySentiment < 45) reasons.push("search interest is surging faster than sentiment quality");
+  if (trendMomentum > 22 && communityStrength < 35) reasons.push("trend momentum is sharp but community depth is weak");
+  if (communityStrength >= 55) reasons.push("community participation looks deeper and more organic");
+  if (communitySentiment >= 58) reasons.push("sentiment quality supports the current trend");
+
+  return {
+    authenticityScore,
+    botRiskScore: clamp(Math.round(botRisk), 4, 92),
+    classification,
+    reviewerAction,
+    verifiedBy: classification === "Human Verified" ? "Model + ruleset" : "Needs human moderator",
+    reasons: reasons.slice(0, 3),
+  };
+}
+
 function calculateTrendMetrics({ trendSeries, priceSeries, ticker, coinGecko }) {
   const trendValues = trendSeries.map((item) => item.value);
   const volumeValues = priceSeries.map((item) => item.volume);
@@ -266,6 +301,14 @@ function calculateTrendMetrics({ trendSeries, priceSeries, ticker, coinGecko }) 
     0,
     100
   );
+  const verification = classifyVerification({
+    trendMomentum,
+    volumeRatio,
+    communitySentiment,
+    communityStrength,
+    currentTrend,
+    priceChangePercent: ticker.priceChangePercent,
+  });
 
   const trendScore = Math.round(mentionsScore * 0.4 + engagementScore * 0.3 + sentimentScore * 0.3);
   const prediction = bucketFromScore(trendScore);
@@ -357,6 +400,7 @@ function calculateTrendMetrics({ trendSeries, priceSeries, ticker, coinGecko }) 
     mentionsScore,
     engagementScore,
     sentimentScore,
+    verification,
     trendScore,
     prediction,
     growthPrediction: prediction,
@@ -516,6 +560,7 @@ export function applyLiveSnapshotToEvent(eventLike, snapshot) {
       fetchedAt: snapshot.fetchedAt,
       liveData: true,
       partialFallback: Boolean(snapshot.partialFallback),
+      verification: snapshot.metrics.verification,
       formulaBreakdown: {
         mentions: snapshot.metrics.mentionsScore,
         engagement: snapshot.metrics.engagementScore,
@@ -527,5 +572,6 @@ export function applyLiveSnapshotToEvent(eventLike, snapshot) {
         marketCap: Math.round(snapshot.coinGecko.marketCap || 0),
       },
     },
+    verification: snapshot.metrics.verification,
   };
 }

@@ -107,3 +107,25 @@ export function accuracySummary(trendScore) {
     note: `Prototype benchmark based on seeded simulation cases calibrated around event engagement and trend velocity.`,
   };
 }
+
+export function verificationSummary({ mentions = 0, sentiment = 50, clicks = 0 }) {
+  let botRisk = 12;
+
+  if (mentions >= 25000 && sentiment < 45) botRisk += 24;
+  if (clicks >= 8000 && sentiment < 50) botRisk += 16;
+  if (sentiment >= 65) botRisk -= 10;
+
+  const authenticityScore = Math.max(10, Math.min(94, 100 - botRisk));
+  return {
+    authenticityScore,
+    botRiskScore: botRisk,
+    classification:
+      authenticityScore >= 72 ? "Human Verified" : authenticityScore <= 42 ? "Likely Bot / AI Amplified" : "Needs Human Review",
+    reviewerAction: authenticityScore >= 72 ? "Low priority review" : "Manual verification recommended",
+    verifiedBy: "Simulation heuristic",
+    reasons:
+      authenticityScore >= 72
+        ? ["engagement quality and sentiment look organic"]
+        : ["growth needs a human check for bot or AI amplification"],
+  };
+}
